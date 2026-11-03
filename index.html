@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>健康紀錄</title>
+<style>
+:root{--bg:#EBF0F4;--surface:#fff;--ink:#16212E;--muted:#5B6B7C;--line:#D3DCE4;--cobalt:#2557C9;--teal:#14907C;--red:#B42318;--chip:#E1E8EF;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0E151D;--surface:#17212C;--ink:#E4EBF2;--muted:#93A3B4;--line:#2A3846;--cobalt:#7EA4FF;--teal:#3FCDB2;--red:#FF8A80;--chip:#223040;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.5;font-variant-numeric:tabular-nums}
+main{max-width:900px;margin:0 auto;padding:24px 16px 56px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h1{font-size:1.5rem;margin:0}
+h2{font-size:1rem;margin:0 0 10px}
+.muted{color:var(--muted);font-size:.85rem}
+button{font:inherit;background:var(--chip);color:var(--ink);border:0;border-radius:8px;padding:6px 12px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.big{font-size:2rem;font-weight:700;line-height:1.1}
+.meter{height:10px;background:var(--chip);border-radius:6px;overflow:hidden;margin:8px 0 4px;position:relative}
+.meter i{display:block;height:100%;background:var(--teal)}
+.meter i.over{background:var(--red)}
+.meter b{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.5}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child,td.l{text-align:left}
+th{color:var(--muted);font-weight:500;font-size:.78rem}
+tr.junk td{color:var(--red)}
+#week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{border:1px solid var(--line);border-radius:10px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.75rem}
+.day.today{border-color:var(--ink)}
+.day .n{font-size:1.05rem;font-weight:700}
+.bar{width:12px;height:44px;background:var(--chip);border-radius:6px;display:flex;align-items:flex-end;overflow:hidden}
+.bar i{display:block;width:100%;background:var(--teal)}
+.sq{width:10px;height:10px;border:2px solid var(--cobalt);border-radius:2px}
+.sq.full{background:var(--cobalt)}.sq.none{border-color:transparent}
+#err{display:none;background:var(--surface);border:1px solid var(--red);border-radius:12px;padding:14px;margin-bottom:14px}
+svg{width:100%;height:auto;display:block}
+code{background:var(--chip);padding:1px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div><h1>健康紀錄</h1><span class="muted" id="dateLabel"></span></div>
+    <button id="reload">重新整理</button>
+  </header>
+  <div id="err"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>今天熱量</h2>
+      <div class="big" id="kcal">–</div>
+      <div class="meter"><i id="kcalBar"></i><b id="kcalMin"></b></div>
+      <div class="muted" id="kcalNote"></div>
+    </div>
+    <div class="panel">
+      <h2>今天蛋白質</h2>
+      <div class="big" id="prot">–</div>
+      <div class="meter"><i id="protBar"></i></div>
+      <div class="muted" id="protNote"></div>
+    </div>
+    <div class="panel">
+      <h2>體重</h2>
+      <div class="big" id="wt">–</div>
+      <div class="muted" id="wtNote"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>本週</h2>
+    <div id="week"></div>
+    <p class="muted" id="weekNote" style="margin:10px 0 0"></p>
+  </div>
+
+  <div class="panel">
+    <h2>今天吃了什麼</h2>
+    <table><thead><tr><th>餐別</th><th>食物</th><th>數量</th><th>熱量</th><th>蛋白質</th></tr></thead><tbody id="meals"></tbody></table>
+  </div>
+
+  <div class="panel">
+    <h2>體重趨勢（近 30 天，藍線為 7 天平均）</h2>
+    <div id="chart"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Tanita 測量</h2>
+    <table><thead><tr><th>日期</th><th>體重</th><th>體脂率</th><th>體脂肪</th><th>肌肉量</th><th>內臟脂肪</th></tr></thead><tbody id="tanita"></tbody></table>
+  </div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function parseCSV(t){
+  const rows=[];let row=[],f='',q=false;
+  t=t.replace(/^\uFEFF/,'');
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c=='"')q=true;else if(c==','){row.push(f);f=''}
+    else if(c=='\n'||c=='\r'){if(c=='\r'&&t[i+1]=='\n')i++;row.push(f);f='';if(row.some(x=>x!==''))rows.push(row);row=[]}
+    else f+=c}
+  if(f!==''||row.length){row.push(f);if(row.some(x=>x!==''))rows.push(row)}
+  const h=rows.shift()||[];return rows.map(r=>Object.fromEntries(h.map((k,i)=>[k.trim(),(r[i]??'').trim()])));
+}
+async function csv(name){const r=await fetch(`data/${name}.csv?t=${Date.now()}`);if(!r.ok)throw new Error(name);return parseCSV(await r.text())}
+const num=v=>v===''||v==null?null:+v;
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+
+async function load(){
+  let daily,meals,tanita,targets;
+  try{[daily,meals,tanita,targets]=await Promise.all(['daily','meals','tanita','targets'].map(csv));$('#err').style.display='none'}
+  catch(e){const el=$('#err');el.style.display='block';el.innerHTML='讀不到 <code>data/</code> 裡的 CSV。請用本機伺服器開啟這個頁面，例如在終端機執行 <code>python -m http.server 8000</code> 後開 <code>http://localhost:8000</code>，或用 VS Code 的 Live Server。';return}
+  const T=Object.fromEntries(targets.map(r=>[r.key,+r.value]));
+  const today=new Date(),tk=ymd(today);
+  $('#dateLabel').textContent=`${today.getMonth()+1}月${today.getDate()}日`;
+  const D=Object.fromEntries(daily.map(r=>[r.date,r]));
+
+  // today food
+  const tm=meals.filter(m=>m.date===tk);
+  const kcal=tm.reduce((s,m)=>s+(+m.kcal||0),0), prot=tm.reduce((s,m)=>s+(+m.protein_g||0),0);
+  const junk=tm.filter(m=>m.category==='亂吃').reduce((s,m)=>s+(+m.kcal||0),0);
+  $('#kcal').textContent=`${Math.round(kcal)} kcal`;
+  const kmax=T.kcal_max||2500,kmin=T.kcal_min||2300;
+  const kb=$('#kcalBar');kb.style.width=Math.min(kcal/kmax,1)*100+'%';kb.className=kcal>kmax?'over':'';
+  $('#kcalMin').style.left=kmin/kmax*100+'%';
+  $('#kcalNote').textContent=`目標 ${kmin}–${kmax}，還有 ${Math.max(0,Math.round(kmax-kcal))} kcal 可用` + (junk?`｜亂吃 ${Math.round(junk)} kcal`:'');
+  const pt=T.protein_g||140;
+  $('#prot').textContent=`${prot.toFixed(1)} g`;
+  $('#protBar').style.width=Math.min(prot/pt,1)*100+'%';
+  $('#protNote').textContent=prot>=pt?'已達標':`還差 ${(pt-prot).toFixed(0)} g（目標 ${pt} g）`;
+  $('#meals').innerHTML=tm.length?tm.map(m=>`<tr class="${m.category==='亂吃'?'junk':''}"><td class="l">${esc(m.meal)}</td><td class="l">${esc(m.food)}</td><td>${esc(m.qty)} ${esc(m.unit)}</td><td>${Math.round(+m.kcal||0)}</td><td>${(+m.protein_g||0).toFixed(1)}</td></tr>`).join(''):'<tr><td colspan="5" class="l muted">今天還沒有紀錄</td></tr>';
+
+  // weight
+  const ws=daily.filter(r=>num(r.weight_kg)).map(r=>({d:r.date,w:+r.weight_kg})).sort((a,b)=>a.d.localeCompare(b.d));
+  const win=(end)=>ws.filter(x=>x.d<=ymd(end)&&x.d>ymd(addDays(end,-7))).map(x=>x.w);
+  const a7=avg(win(today)),p7=avg(win(addDays(today,-7)));
+  const lastW=ws.length?ws[ws.length-1]:null;
+  $('#wt').textContent=lastW?`${lastW.w.toFixed(1)} kg`:'–';
+  $('#wtNote').textContent=a7?`7 天平均 ${a7.toFixed(1)} kg`+(p7?`（上週 ${p7.toFixed(1)}，${a7-p7<=0?'':'+'}${(a7-p7).toFixed(1)}）`:''):'還沒有體重紀錄';
+
+  // week
+  const mon=addDays(today,-((today.getDay()+6)%7));const names=['一','二','三','四','五','六','日'];
+  let cmin=0,sc=0;$('#week').innerHTML='';
+  for(let i=0;i<7;i++){const d=addDays(mon,i),k=ymd(d),e=D[k]||{};const c=+e.cardio_min||0;cmin+=c;if(e.strength)sc++;
+    const sq=e.strength==='教練課'?'sq full':e.strength==='自主'?'sq':'sq none';
+    $('#week').insertAdjacentHTML('beforeend',`<div class="day${k===tk?' today':''}"><span class="muted">${names[i]}</span><span class="n">${d.getDate()}</span><span class="bar"><i style="height:${Math.min(c,60)/60*100}%"></i></span><b class="${sq}"></b></div>`)}
+  $('#weekNote').textContent=`有氧 ${cmin} / ${T.cardio_min_week||150} 分鐘｜重訓 ${sc} / ${T.strength_week||2} 次（實心方塊＝教練課，空心＝自主）`;
+
+  // chart
+  const start=addDays(today,-29),pts=[];
+  for(let i=0;i<30;i++){const e=D[ymd(addDays(start,i))];if(e&&num(e.weight_kg))pts.push({i,w:+e.weight_kg})}
+  if(pts.length<2){$('#chart').innerHTML='<p class="muted">記錄兩天以上的體重就會出現趨勢線。</p>'}
+  else{const W=600,H=200,pl=40,pr=10,pt2=10,pb=24;const v=pts.map(p=>p.w);const mn=Math.min(...v)-.5,mx=Math.max(...v)+.5;
+    const x=i=>pl+i/29*(W-pl-pr),y=w=>pt2+(mx-w)/(mx-mn)*(H-pt2-pb);
+    const roll=pts.map(p=>({i:p.i,w:avg(pts.filter(q=>q.i<=p.i&&q.i>p.i-7).map(q=>q.w))}));
+    $('#chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="體重趨勢">
+      <text x="${pl-6}" y="${y(mx)+10}" font-size="11" text-anchor="end" fill="var(--muted)">${mx.toFixed(1)}</text>
+      <text x="${pl-6}" y="${y(mn)}" font-size="11" text-anchor="end" fill="var(--muted)">${mn.toFixed(1)}</text>
+      <line x1="${pl}" x2="${W-pr}" y1="${H-pb}" y2="${H-pb}" stroke="var(--line)"/>
+      ${pts.map(p=>`<circle cx="${x(p.i)}" cy="${y(p.w)}" r="3" fill="var(--muted)" opacity=".7"/>`).join('')}
+      <polyline points="${roll.map(p=>`${x(p.i)},${y(p.w)}`).join(' ')}" fill="none" stroke="var(--cobalt)" stroke-width="3" stroke-linejoin="round"/>
+      <text x="${pl}" y="${H-6}" font-size="11" fill="var(--muted)">${start.getMonth()+1}/${start.getDate()}</text>
+      <text x="${W-pr}" y="${H-6}" font-size="11" text-anchor="end" fill="var(--muted)">${today.getMonth()+1}/${today.getDate()}</text></svg>`}
+
+  $('#tanita').innerHTML=tanita.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.weight_kg)}</td><td>${esc(t.body_fat_pct)}%</td><td>${esc(t.fat_mass_kg)}</td><td>${esc(t.muscle_kg)}</td><td>${esc(t.visceral)}</td></tr>`).join('');
+}
+$('#reload').onclick=load;load();
+</script>
+</body>
+</html>

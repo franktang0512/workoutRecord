@@ -1,0 +1,6 @@
+key,value,note
+kcal_min,2300,每日熱量下限
+kcal_max,2500,每日熱量上限
+protein_g,140,每日蛋白質目標
+cardio_min_week,150,每週有氧分鐘
+strength_week,2,每週重訓次數
