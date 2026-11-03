@@ -283,7 +283,7 @@ function render(){
   const groups=[...new Set([...ORDER.filter(o=>tm.some(m=>m.meal===o)),...tm.map(m=>m.meal)])];
   $('#meals').innerHTML=tm.length?groups.map(g=>{const it=tm.filter(m=>m.meal===g);
     const gk=it.reduce((s,m)=>s+(+m.kcal||0),0),gp=it.reduce((s,m)=>s+(+m.protein_g||0),0);
-    return `<div class="meal"><h3>${esc(g)}<span>${Math.round(gk)} kcal · ${gp.toFixed(0)} g</span></h3>`+it.map(m=>`<div class="item${m.category==='亂吃'?' junk':''}"><div class="f">${esc(m.food)}<small>${esc(m.qty)} ${esc(m.unit)}</small>${m.category==='亂吃'?'<span class="tag">亂吃</span>':''}</div><div class="v">${Math.round(+m.kcal||0)}<small>${(+m.protein_g||0).toFixed(1)} g</small></div></div>`).join('')+'</div>'}).join('')
+    return `<div class="meal"><h3>${esc(g)}<span>${Math.round(gk)} kcal · ${gp.toFixed(0)} g</span></h3>`+it.map(m=>`<div class="item${m.category==='亂吃'?' junk':''}"><div class="f">${esc(m.food)}<small>${esc(m.qty)} ${esc(m.unit)}</small>${m.category==='亂吃'?'<span class="tag">亂吃</span>':''}</div><div class="v">${Math.round(+m.kcal||0)} kcal<small>蛋白 ${(+m.protein_g||0).toFixed(0)} g</small></div></div>`).join('')+'</div>'}).join('')
     :`<p class="muted" style="margin:0">${isToday?'今天':'這天'}還沒有紀錄</p>`;
   $('#dayNote').textContent=de.note||'';
 
