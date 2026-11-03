@@ -3,9 +3,12 @@
 這個資料夾是 Frank 的每日運動與飲食紀錄。他會用聊天的方式告訴你吃了什麼、做了什麼運動，由你負責更新 `data/` 裡的 CSV。`index.html` 是讀取這些 CSV 的儀表板。
 
 ## 檔案
-- `data/daily.csv`：每天一列。`date,weight_kg,cardio_min,strength,note`
+- `data/daily.csv`：每天一列。`date,weight_kg,cardio_min,strength,water_ml,supplements,note`
   - `strength` 只能是：空白、`自主`、`教練課`
+  - `water_ml`：當天喝水總量（ml），同一天多次要相加
+  - `supplements`：當天有吃的保健品，填 `supplements.csv` 的 `short` 名稱，用「、」分隔，例如 `肌酸、維他命`
   - 同一天已有資料時，更新那一列，不要新增重複的日期；有氧分鐘同一天多次要相加
+- `data/supplements.csv`：要追蹤的保健品清單。`short,name,dose,note`。網頁會依這份清單顯示打勾項目；新增保健品就加一列。保健品熱量可忽略，不記到 meals。
 - `data/meals.csv`：一樣食物一列。`date,meal,food,qty,unit,kcal,protein_g,category`
   - `meal`：早餐／午餐／晚餐／點心／宵夜
   - `category`：`正常` 或 `亂吃`（零食、甜點、含糖飲料、宵夜炸物通常算亂吃；不確定就問）

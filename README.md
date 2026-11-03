@@ -8,11 +8,12 @@ index.html        儀表板（讀取 data/ 裡的 CSV）
 CLAUDE.md         給 Claude Code 的記錄規則
 .nojekyll         讓 GitHub Pages 直接提供檔案
 data/
-  daily.csv       每日體重、有氧、重訓
+  daily.csv       每日體重、有氧、重訓、喝水、保健品
   meals.csv       飲食明細（一樣食物一列）
   foods.csv       食物庫（營養標示）
   tanita.csv      體組成測量
   targets.csv     目標值
+  supplements.csv 要追蹤的保健品
 ```
 
 ## 發布到 GitHub Pages

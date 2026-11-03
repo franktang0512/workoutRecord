@@ -2,119 +2,212 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="健康紀錄">
+<meta name="theme-color" content="#EBF0F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E151D" media="(prefers-color-scheme: dark)">
 <title>健康紀錄</title>
 <style>
-:root{--bg:#EBF0F4;--surface:#fff;--ink:#16212E;--muted:#5B6B7C;--line:#D3DCE4;--cobalt:#2557C9;--teal:#14907C;--red:#B42318;--chip:#E1E8EF;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#0E151D;--surface:#17212C;--ink:#E4EBF2;--muted:#93A3B4;--line:#2A3846;--cobalt:#7EA4FF;--teal:#3FCDB2;--red:#FF8A80;--chip:#223040;color-scheme:dark}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.5;font-variant-numeric:tabular-nums}
-main{max-width:900px;margin:0 auto;padding:24px 16px 56px}
-header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-h1{font-size:1.5rem;margin:0}
+:root{--bg:#EBF0F4;--surface:#fff;--ink:#16212E;--muted:#5B6B7C;--line:#D3DCE4;--cobalt:#2557C9;--teal:#14907C;--water:#1F7FD1;--violet:#6F45C8;--red:#B42318;--chip:#E1E8EF;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0E151D;--surface:#17212C;--ink:#E4EBF2;--muted:#93A3B4;--line:#2A3846;--cobalt:#7EA4FF;--teal:#3FCDB2;--water:#5EB4FF;--violet:#B79CFF;--red:#FF8A80;--chip:#223040;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.5;font-variant-numeric:tabular-nums}
+main{max-width:900px;margin:0 auto;padding:12px 16px 56px}
+h1{font-size:1.25rem;margin:0}
 h2{font-size:1rem;margin:0 0 10px}
 .muted{color:var(--muted);font-size:.85rem}
-.nav{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-input[type=date]{font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
-#hist tr{cursor:pointer}#hist tr.sel td{background:var(--chip)}
-.scroll{overflow-x:auto}
-button{font:inherit;background:var(--chip);color:var(--ink);border:0;border-radius:8px;padding:6px 12px;cursor:pointer}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
-.big{font-size:2rem;font-weight:700;line-height:1.1}
+button{font:inherit;background:var(--chip);color:var(--ink);border:0;border-radius:10px;padding:6px 12px;cursor:pointer;min-height:36px}
+
+/* header */
+.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;margin:-12px -16px 12px;border-bottom:1px solid var(--line)}
+.top .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.nav{display:flex;gap:6px;align-items:center;margin-top:8px}
+.nav input{flex:1;min-width:0;font:inherit;font-size:16px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:5px 8px;min-height:36px}
+.nav button{padding:6px 10px}
+
+/* tabs */
+.tabs{display:flex;gap:4px;background:var(--chip);border-radius:12px;padding:4px;margin-bottom:14px}
+.tabs button{flex:1;background:transparent;border-radius:9px;color:var(--muted);font-weight:600}
+.tabs button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+@media (max-width:699px){
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;margin:0;border-radius:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 12px calc(6px + env(safe-area-inset-bottom))}
+  .tabs button{min-height:44px}
+  .tabs button[aria-selected=true]{background:var(--chip);box-shadow:none}
+  main{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+}
+section[hidden]{display:none}
+
+/* cards */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.grid .panel{margin:0}
+.big{font-size:1.75rem;font-weight:700;line-height:1.1}
+.big small{font-size:.85rem;font-weight:500;color:var(--muted)}
+@media (max-width:420px){.big{font-size:1.45rem}}
 .meter{height:10px;background:var(--chip);border-radius:6px;overflow:hidden;margin:8px 0 4px;position:relative}
 .meter i{display:block;height:100%;background:var(--teal)}
 .meter i.over{background:var(--red)}
+.meter i.water{background:var(--water)}
 .meter b{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.5}
-table{width:100%;border-collapse:collapse;font-size:.88rem}
-th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}
-th:first-child,td:first-child,td.l{text-align:left}
-th{color:var(--muted);font-weight:500;font-size:.78rem}
-tr.junk td{color:var(--red)}
-#week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.day{border:1px solid var(--line);border-radius:10px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.75rem}
+
+/* habits */
+.waterRow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.chk{display:flex;align-items:center;gap:8px;background:var(--chip);border-radius:10px;padding:8px 10px;min-height:44px}
+.chk i{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;font-style:normal;font-size:.8rem;font-weight:700;color:var(--surface)}
+.chk.on i{background:var(--teal);border-color:var(--teal)}
+.chk span{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.chk small{color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* meals */
+.meal{border-top:1px solid var(--line);padding:8px 0}
+.meal:first-of-type{border-top:0;padding-top:0}
+.meal h3{display:flex;justify-content:space-between;font-size:.9rem;margin:0 0 4px}
+.meal h3 span{color:var(--muted);font-weight:500;font-size:.8rem}
+.item{display:flex;justify-content:space-between;gap:10px;font-size:.88rem;padding:3px 0}
+.item .f{min-width:0}
+.item .f small{color:var(--muted);margin-left:4px}
+.item .v{flex:none;text-align:right;white-space:nowrap}
+.item .v small{color:var(--muted);margin-left:6px}
+.item.junk .f{color:var(--red)}
+.tag{display:inline-block;font-size:.68rem;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:0 4px;margin-left:4px;vertical-align:1px}
+
+/* week */
+#week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day{border:1px solid var(--line);border-radius:10px;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.72rem;cursor:pointer}
 .day.today{border-color:var(--ink)}
-.day .n{font-size:1.05rem;font-weight:700}
-.bar{width:12px;height:44px;background:var(--chip);border-radius:6px;display:flex;align-items:flex-end;overflow:hidden}
+.day .n{font-size:1rem;font-weight:700}
+.bars{display:flex;gap:3px}
+.bar{width:8px;height:40px;background:var(--chip);border-radius:4px;display:flex;align-items:flex-end;overflow:hidden}
 .bar i{display:block;width:100%;background:var(--teal)}
+.bar.w i{background:var(--water)}
+.marks{display:flex;gap:3px;align-items:center;height:12px}
 .sq{width:10px;height:10px;border:2px solid var(--cobalt);border-radius:2px}
 .sq.full{background:var(--cobalt)}.sq.none{border-color:transparent}
-#err{display:none;background:var(--surface);border:1px solid var(--red);border-radius:12px;padding:14px;margin-bottom:14px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--violet)}.dot.none{background:transparent}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+/* history */
+.hrow{display:grid;grid-template-columns:62px 1fr auto;gap:2px 10px;align-items:baseline;padding:9px 4px;border-top:1px solid var(--line);cursor:pointer}
+.hrow:first-child{border-top:0}
+.hrow.sel{background:var(--chip);border-radius:10px;border-color:transparent}
+.hrow .d b{display:block}
+.hrow .k b{font-size:1rem}
+.hrow .wt{text-align:right;color:var(--muted);font-size:.85rem}
+.badges{grid-column:2/4;display:flex;flex-wrap:wrap;gap:4px}
+.b{font-size:.72rem;border-radius:6px;padding:1px 6px;background:var(--chip);color:var(--muted)}
+.b.c{color:var(--teal)}.b.s{color:var(--cobalt)}.b.w{color:var(--water)}.b.p{color:var(--violet)}.b.j{color:var(--red)}
+
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:500;font-size:.75rem}
+.scroll{overflow-x:auto}
+#err{display:none;background:var(--surface);border:1px solid var(--red);border-radius:12px;padding:14px;margin-bottom:12px}
 svg{width:100%;height:auto;display:block}
 code{background:var(--chip);padding:1px 5px;border-radius:4px}
 </style>
 </head>
 <body>
 <main>
-  <header>
-    <div><h1>健康紀錄</h1><span class="muted" id="dateLabel"></span></div>
+  <div class="top">
+    <div class="row"><h1>健康紀錄</h1><span class="muted" id="dateLabel"></span></div>
     <div class="nav">
       <button id="prev" aria-label="前一天">‹</button>
-      <input type="date" id="pick">
+      <input type="date" id="pick" aria-label="選擇日期">
       <button id="next" aria-label="後一天">›</button>
       <button id="todayBtn">今天</button>
-      <button id="reload">重新整理</button>
+      <button id="reload" aria-label="重新整理">↻</button>
     </div>
-  </header>
+  </div>
   <div id="err"></div>
 
-  <div class="grid">
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="today">今天</button>
+    <button role="tab" data-tab="log">紀錄</button>
+    <button role="tab" data-tab="body">身體</button>
+  </nav>
+
+  <section data-tab="today">
+    <div class="grid">
+      <div class="panel">
+        <h2>熱量</h2>
+        <div class="big" id="kcal">–</div>
+        <div class="meter"><i id="kcalBar"></i><b id="kcalMin"></b></div>
+        <div class="muted" id="kcalNote"></div>
+      </div>
+      <div class="panel">
+        <h2>蛋白質</h2>
+        <div class="big" id="prot">–</div>
+        <div class="meter"><i id="protBar"></i></div>
+        <div class="muted" id="protNote"></div>
+      </div>
+    </div>
+
     <div class="panel">
-      <h2><span class="dayWord">今天</span>熱量</h2>
-      <div class="big" id="kcal">–</div>
-      <div class="meter"><i id="kcalBar"></i><b id="kcalMin"></b></div>
-      <div class="muted" id="kcalNote"></div>
+      <div class="waterRow"><h2 style="margin:0">喝水</h2><span class="muted" id="waterNote"></span></div>
+      <div class="big" id="water" style="margin-top:4px">–</div>
+      <div class="meter"><i class="water" id="waterBar"></i></div>
+      <div class="checks" id="checks"></div>
+    </div>
+
+    <div class="panel">
+      <h2>飲食</h2>
+      <div id="meals"></div>
+      <p class="muted" id="dayNote" style="margin:8px 0 0"></p>
+    </div>
+  </section>
+
+  <section data-tab="log" hidden>
+    <div class="panel">
+      <h2>本週</h2>
+      <div id="week"></div>
+      <div class="legend muted">
+        <span><i class="sw" style="background:var(--teal)"></i>有氧</span>
+        <span><i class="sw" style="background:var(--water)"></i>喝水</span>
+        <span><i class="sq full"></i>教練課</span>
+        <span><i class="sq"></i>自主</span>
+        <span><i class="dot"></i>肌酸</span>
+      </div>
+      <p class="muted" id="weekNote" style="margin:8px 0 0"></p>
     </div>
     <div class="panel">
-      <h2><span class="dayWord">今天</span>蛋白質</h2>
-      <div class="big" id="prot">–</div>
-      <div class="meter"><i id="protBar"></i></div>
-      <div class="muted" id="protNote"></div>
+      <h2>近 14 天</h2>
+      <div id="hist"></div>
     </div>
+  </section>
+
+  <section data-tab="body" hidden>
     <div class="panel">
       <h2>體重</h2>
       <div class="big" id="wt">–</div>
       <div class="muted" id="wtNote"></div>
+      <div id="chart" style="margin-top:12px"></div>
+      <p class="muted" style="margin:6px 0 0">近 30 天，藍線為 7 天平均</p>
     </div>
-  </div>
-
-  <div class="panel">
-    <h2>本週</h2>
-    <div id="week"></div>
-    <p class="muted" id="weekNote" style="margin:10px 0 0"></p>
-  </div>
-
-  <div class="panel">
-    <h2><span class="dayWord">今天</span>吃了什麼</h2>
-    <table><thead><tr><th>餐別</th><th>食物</th><th>數量</th><th>熱量</th><th>蛋白質</th></tr></thead><tbody id="meals"></tbody></table>
-    <p class="muted" id="dayNote" style="margin:10px 0 0"></p>
-  </div>
-
-  <div class="panel">
-    <h2>近 14 天（點一列可切換日期）</h2>
-    <div class="scroll"><table><thead><tr><th>日期</th><th>熱量</th><th>蛋白質</th><th>亂吃</th><th>有氧</th><th>重訓</th><th>體重</th></tr></thead><tbody id="hist"></tbody></table></div>
-  </div>
-
-  <div class="panel">
-    <h2>體重趨勢（近 30 天，藍線為 7 天平均）</h2>
-    <div id="chart"></div>
-  </div>
-
-  <div class="panel">
-    <h2>Tanita 測量</h2>
-    <table><thead><tr><th>日期</th><th>體重</th><th>體脂率</th><th>體脂肪</th><th>肌肉量</th><th>內臟脂肪</th></tr></thead><tbody id="tanita"></tbody></table>
-  </div>
+    <div class="panel">
+      <h2>Tanita 測量</h2>
+      <div class="scroll"><table><thead><tr><th>日期</th><th>體重</th><th>體脂率</th><th>體脂肪</th><th>肌肉量</th><th>內臟</th></tr></thead><tbody id="tanita"></tbody></table></div>
+    </div>
+  </section>
 </main>
 <script>
 const $=s=>document.querySelector(s);
 const pad=n=>String(n).padStart(2,'0');
 const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const fromYmd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const WD='日一二三四五六';
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function parseCSV(t){
   const rows=[];let row=[],f='',q=false;
-  t=t.replace(/^\uFEFF/,'');
+  t=t.replace(/^﻿/,'');
   for(let i=0;i<t.length;i++){const c=t[i];
     if(q){if(c=='"'){if(t[i+1]=='"'){f+='"';i++}else q=false}else f+=c}
     else if(c=='"')q=true;else if(c==','){row.push(f);f=''}
@@ -126,91 +219,131 @@ function parseCSV(t){
 async function csv(name){const r=await fetch(`data/${name}.csv?t=${Date.now()}`);if(!r.ok)throw new Error(name);return parseCSV(await r.text())}
 const num=v=>v===''||v==null?null:+v;
 const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+const liters=ml=>(ml/1000).toFixed(1);
+
+// tabs
+const TABS=['today','log','body'];
+function showTab(t){
+  if(!TABS.includes(t))t='today';
+  document.querySelectorAll('section[data-tab]').forEach(s=>s.hidden=s.dataset.tab!==t);
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  try{localStorage.setItem('tab',t)}catch(e){}
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{showTab(b.dataset.tab);scrollTo(0,0)});
+let savedTab='today';try{savedTab=localStorage.getItem('tab')||'today'}catch(e){}
+showTab(savedTab);
 
 let sel=new Date(),cache=null;
-const fromYmd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
 
 async function load(){
-  try{cache=await Promise.all(['daily','meals','tanita','targets'].map(csv));$('#err').style.display='none'}
-  catch(e){const el=$('#err');el.style.display='block';el.innerHTML='讀不到 <code>data/</code> 裡的 CSV。請用本機伺服器開啟這個頁面，例如在終端機執行 <code>python -m http.server 8000</code> 後開 <code>http://localhost:8000</code>，或用 VS Code 的 Live Server。';return}
+  try{cache=await Promise.all(['daily','meals','tanita','targets','supplements'].map(csv));$('#err').style.display='none'}
+  catch(e){const el=$('#err');el.style.display='block';el.innerHTML='讀不到 <code>data/</code> 裡的 CSV。請用本機伺服器開啟這個頁面，例如在終端機執行 <code>python -m http.server 8000</code> 後開 <code>http://localhost:8000</code>。';return}
   render();
 }
+
 function render(){
   if(!cache)return;
-  const [daily,meals,tanita,targets]=cache;
+  const [daily,meals,tanita,targets,supps]=cache;
   const T=Object.fromEntries(targets.map(r=>[r.key,+r.value]));
   const today=sel,tk=ymd(today),isToday=tk===ymd(new Date());
-  const wd='日一二三四五六'[today.getDay()];
-  $('#dateLabel').textContent=`${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日（${wd}）`;
+  $('#dateLabel').textContent=`${isToday?'今天 · ':''}${today.getMonth()+1}月${today.getDate()}日（${WD[today.getDay()]}）`;
   $('#pick').value=tk;
-  document.querySelectorAll('.dayWord').forEach(el=>el.textContent=isToday?'今天':`${today.getMonth()+1}/${today.getDate()} `);
   const D=Object.fromEntries(daily.map(r=>[r.date,r]));
+  const taken=k=>new Set(((D[k]||{}).supplements||'').split(/[、|;；]/).map(s=>s.trim()).filter(Boolean));
   const dayTotals=k=>{const m=meals.filter(x=>x.date===k);return{n:m.length,kcal:m.reduce((s,x)=>s+(+x.kcal||0),0),prot:m.reduce((s,x)=>s+(+x.protein_g||0),0),junk:m.filter(x=>x.category==='亂吃').reduce((s,x)=>s+(+x.kcal||0),0)}};
-
-  // today food
-  const tm=meals.filter(m=>m.date===tk);
-  const kcal=tm.reduce((s,m)=>s+(+m.kcal||0),0), prot=tm.reduce((s,m)=>s+(+m.protein_g||0),0);
-  const junk=tm.filter(m=>m.category==='亂吃').reduce((s,m)=>s+(+m.kcal||0),0);
-  $('#kcal').textContent=`${Math.round(kcal)} kcal`;
-  const kmax=T.kcal_max||2500,kmin=T.kcal_min||2300;
-  const kb=$('#kcalBar');kb.style.width=Math.min(kcal/kmax,1)*100+'%';kb.className=kcal>kmax?'over':'';
-  $('#kcalMin').style.left=kmin/kmax*100+'%';
-  $('#kcalNote').textContent=`目標 ${kmin}–${kmax}，還有 ${Math.max(0,Math.round(kmax-kcal))} kcal 可用` + (junk?`｜亂吃 ${Math.round(junk)} kcal`:'');
-  const pt=T.protein_g||140;
-  $('#prot').textContent=`${prot.toFixed(1)} g`;
-  $('#protBar').style.width=Math.min(prot/pt,1)*100+'%';
-  $('#protNote').textContent=prot>=pt?'已達標':`還差 ${(pt-prot).toFixed(0)} g（目標 ${pt} g）`;
-  $('#meals').innerHTML=tm.length?tm.map(m=>`<tr class="${m.category==='亂吃'?'junk':''}"><td class="l">${esc(m.meal)}</td><td class="l">${esc(m.food)}</td><td>${esc(m.qty)} ${esc(m.unit)}</td><td>${Math.round(+m.kcal||0)}</td><td>${(+m.protein_g||0).toFixed(1)}</td></tr>`).join(''):`<tr><td colspan="5" class="l muted">${isToday?'今天':'這天'}還沒有紀錄</td></tr>`;
+  const waterT=T.water_ml||3500;
   const de=D[tk]||{};
-  $('#dayNote').textContent=[de.cardio_min?`有氧 ${de.cardio_min} 分鐘`:'',de.strength?`重訓：${de.strength}`:'',de.note||''].filter(Boolean).join('｜');
+
+  // kcal & protein
+  const t0=dayTotals(tk);
+  const kmax=T.kcal_max||2500,kmin=T.kcal_min||2300;
+  $('#kcal').innerHTML=`${Math.round(t0.kcal)} <small>kcal</small>`;
+  const kb=$('#kcalBar');kb.style.width=Math.min(t0.kcal/kmax,1)*100+'%';kb.className=t0.kcal>kmax?'over':'';
+  $('#kcalMin').style.left=kmin/kmax*100+'%';
+  $('#kcalNote').innerHTML=`目標 ${kmin}–${kmax}<br>`+(t0.kcal>kmax?`超過 ${Math.round(t0.kcal-kmax)}`:`還有 ${Math.round(kmax-t0.kcal)} 可用`)+(t0.junk?`<br>亂吃 ${Math.round(t0.junk)}`:'');
+  const pt=T.protein_g||140;
+  $('#prot').innerHTML=`${t0.prot.toFixed(0)} <small>g</small>`;
+  $('#protBar').style.width=Math.min(t0.prot/pt,1)*100+'%';
+  $('#protNote').innerHTML=`目標 ${pt} g<br>`+(t0.prot>=pt?'已達標':`還差 ${(pt-t0.prot).toFixed(0)} g`);
+
+  // water & checklist
+  const w=+de.water_ml||0;
+  $('#water').innerHTML=`${liters(w)} <small>/ ${liters(waterT)} L</small>`;
+  $('#waterBar').style.width=Math.min(w/waterT,1)*100+'%';
+  $('#waterNote').textContent=w>=waterT?'已達標':`還差 ${Math.round(waterT-w)} ml`;
+  const tk0=taken(tk),cardio=+de.cardio_min||0;
+  const chk=(on,label,sub)=>`<div class="chk${on?' on':''}"><i>${on?'✓':''}</i><span>${esc(label)}<small>${esc(sub)}</small></span></div>`;
+  $('#checks').innerHTML=supps.map(s=>chk(tk0.has(s.short),s.short,s.dose)).join('')
+    +chk(cardio>0,'有氧',cardio?`${cardio} 分鐘`:'還沒做')
+    +chk(!!de.strength,'重訓',de.strength||'今天沒有');
+
+  // meals grouped
+  const ORDER=['早餐','午餐','晚餐','點心','宵夜'];
+  const tm=meals.filter(m=>m.date===tk);
+  const groups=[...new Set([...ORDER.filter(o=>tm.some(m=>m.meal===o)),...tm.map(m=>m.meal)])];
+  $('#meals').innerHTML=tm.length?groups.map(g=>{const it=tm.filter(m=>m.meal===g);
+    const gk=it.reduce((s,m)=>s+(+m.kcal||0),0),gp=it.reduce((s,m)=>s+(+m.protein_g||0),0);
+    return `<div class="meal"><h3>${esc(g)}<span>${Math.round(gk)} kcal · ${gp.toFixed(0)} g</span></h3>`+it.map(m=>`<div class="item${m.category==='亂吃'?' junk':''}"><div class="f">${esc(m.food)}<small>${esc(m.qty)} ${esc(m.unit)}</small>${m.category==='亂吃'?'<span class="tag">亂吃</span>':''}</div><div class="v">${Math.round(+m.kcal||0)}<small>${(+m.protein_g||0).toFixed(1)} g</small></div></div>`).join('')+'</div>'}).join('')
+    :`<p class="muted" style="margin:0">${isToday?'今天':'這天'}還沒有紀錄</p>`;
+  $('#dayNote').textContent=de.note||'';
+
+  // week
+  const mon=addDays(today,-((today.getDay()+6)%7));
+  let cmin=0,sc=0,cre=0,wok=0;$('#week').innerHTML='';
+  for(let i=0;i<7;i++){const d=addDays(mon,i),k=ymd(d),e=D[k]||{};const c=+e.cardio_min||0,wm=+e.water_ml||0,tset=taken(k);
+    cmin+=c;if(e.strength)sc++;if(tset.has('肌酸'))cre++;if(wm>=waterT)wok++;
+    const sq=e.strength==='教練課'?'sq full':e.strength==='自主'?'sq':'sq none';
+    $('#week').insertAdjacentHTML('beforeend',`<div class="day${k===tk?' today':''}" data-d="${k}"><span class="muted">${'一二三四五六日'[i]}</span><span class="n">${d.getDate()}</span><span class="bars"><span class="bar"><i style="height:${Math.min(c,60)/60*100}%"></i></span><span class="bar w"><i style="height:${Math.min(wm/waterT,1)*100}%"></i></span></span><span class="marks"><b class="${sq}"></b><b class="dot${tset.has('肌酸')?'':' none'}"></b></span></div>`)}
+  $('#weekNote').textContent=`有氧 ${cmin} / ${T.cardio_min_week||150} 分｜重訓 ${sc} / ${T.strength_week||2} 次｜肌酸 ${cre} / 7 天｜喝水達標 ${wok} 天`;
 
   // history
   let h='';
-  for(let i=0;i<14;i++){const d=addDays(today,-i),k=ymd(d),e=D[k]||{},t=dayTotals(k);
-    h+=`<tr data-d="${k}" class="${i===0?'sel':''}"><td>${d.getMonth()+1}/${d.getDate()}（${'日一二三四五六'[d.getDay()]}）</td><td>${t.n?Math.round(t.kcal):'–'}</td><td>${t.n?t.prot.toFixed(0):'–'}</td><td>${t.junk?Math.round(t.junk):''}</td><td>${e.cardio_min||''}</td><td>${esc(e.strength)}</td><td>${esc(e.weight_kg)}</td></tr>`}
+  for(let i=0;i<14;i++){const d=addDays(today,-i),k=ymd(d),e=D[k]||{},t=dayTotals(k),ts=taken(k);
+    const bs=[];
+    if(+e.cardio_min)bs.push(`<span class="b c">有氧 ${e.cardio_min}</span>`);
+    if(e.strength)bs.push(`<span class="b s">${esc(e.strength)}</span>`);
+    if(+e.water_ml)bs.push(`<span class="b w">水 ${liters(+e.water_ml)} L</span>`);
+    ts.forEach(s=>bs.push(`<span class="b p">${esc(s)}</span>`));
+    if(t.junk)bs.push(`<span class="b j">亂吃 ${Math.round(t.junk)}</span>`);
+    h+=`<div class="hrow${i===0?' sel':''}" data-d="${k}"><div class="d"><b>${d.getMonth()+1}/${d.getDate()}</b><span class="muted">週${WD[d.getDay()]}</span></div><div class="k">${t.n?`<b>${Math.round(t.kcal)}</b> <span class="muted">kcal · ${t.prot.toFixed(0)} g</span>`:'<span class="muted">沒有飲食紀錄</span>'}</div><div class="wt">${e.weight_kg?esc(e.weight_kg)+' kg':''}</div>${bs.length?`<div class="badges">${bs.join('')}</div>`:''}</div>`}
   $('#hist').innerHTML=h;
 
   // weight
-  const ws=daily.filter(r=>num(r.weight_kg)).map(r=>({d:r.date,w:+r.weight_kg})).sort((a,b)=>a.d.localeCompare(b.d));
-  const win=(end)=>ws.filter(x=>x.d<=ymd(end)&&x.d>ymd(addDays(end,-7))).map(x=>x.w);
+  const ws=daily.filter(r=>num(r.weight_kg)&&r.date<=tk).map(r=>({d:r.date,w:+r.weight_kg})).sort((a,b)=>a.d.localeCompare(b.d));
+  const win=end=>ws.filter(x=>x.d<=ymd(end)&&x.d>ymd(addDays(end,-7))).map(x=>x.w);
   const a7=avg(win(today)),p7=avg(win(addDays(today,-7)));
   const lastW=ws.length?ws[ws.length-1]:null;
-  $('#wt').textContent=lastW?`${lastW.w.toFixed(1)} kg`:'–';
-  $('#wtNote').textContent=a7?`7 天平均 ${a7.toFixed(1)} kg`+(p7?`（上週 ${p7.toFixed(1)}，${a7-p7<=0?'':'+'}${(a7-p7).toFixed(1)}）`:''):'還沒有體重紀錄';
+  $('#wt').innerHTML=lastW?`${lastW.w.toFixed(1)} <small>kg · ${lastW.d.slice(5).replace('-','/')}</small>`:'–';
+  $('#wtNote').textContent=a7?`7 天平均 ${a7.toFixed(1)} kg`+(p7?`（上週 ${p7.toFixed(1)}，${a7-p7<=0?'':'+'}${(a7-p7).toFixed(1)}）`:''):'近 7 天沒有體重紀錄';
 
-  // week
-  const mon=addDays(today,-((today.getDay()+6)%7));const names=['一','二','三','四','五','六','日'];
-  let cmin=0,sc=0;$('#week').innerHTML='';
-  for(let i=0;i<7;i++){const d=addDays(mon,i),k=ymd(d),e=D[k]||{};const c=+e.cardio_min||0;cmin+=c;if(e.strength)sc++;
-    const sq=e.strength==='教練課'?'sq full':e.strength==='自主'?'sq':'sq none';
-    $('#week').insertAdjacentHTML('beforeend',`<div class="day${k===tk?' today':''}"><span class="muted">${names[i]}</span><span class="n">${d.getDate()}</span><span class="bar"><i style="height:${Math.min(c,60)/60*100}%"></i></span><b class="${sq}"></b></div>`)}
-  $('#weekNote').textContent=`有氧 ${cmin} / ${T.cardio_min_week||150} 分鐘｜重訓 ${sc} / ${T.strength_week||2} 次（實心方塊＝教練課，空心＝自主）`;
-
-  // chart
   const start=addDays(today,-29),pts=[];
   for(let i=0;i<30;i++){const e=D[ymd(addDays(start,i))];if(e&&num(e.weight_kg))pts.push({i,w:+e.weight_kg})}
-  if(pts.length<2){$('#chart').innerHTML='<p class="muted">記錄兩天以上的體重就會出現趨勢線。</p>'}
-  else{const W=600,H=200,pl=40,pr=10,pt2=10,pb=24;const v=pts.map(p=>p.w);const mn=Math.min(...v)-.5,mx=Math.max(...v)+.5;
+  if(pts.length<2){$('#chart').innerHTML='<p class="muted" style="margin:0">記錄兩天以上的體重就會出現趨勢線。</p>'}
+  else{const W=600,H=220,pl=44,pr=10,pt2=10,pb=26;const v=pts.map(p=>p.w);const mn=Math.min(...v)-.5,mx=Math.max(...v)+.5;
     const x=i=>pl+i/29*(W-pl-pr),y=w=>pt2+(mx-w)/(mx-mn)*(H-pt2-pb);
     const roll=pts.map(p=>({i:p.i,w:avg(pts.filter(q=>q.i<=p.i&&q.i>p.i-7).map(q=>q.w))}));
     $('#chart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="體重趨勢">
-      <text x="${pl-6}" y="${y(mx)+10}" font-size="11" text-anchor="end" fill="var(--muted)">${mx.toFixed(1)}</text>
-      <text x="${pl-6}" y="${y(mn)}" font-size="11" text-anchor="end" fill="var(--muted)">${mn.toFixed(1)}</text>
+      <text x="${pl-6}" y="${y(mx)+12}" font-size="14" text-anchor="end" fill="var(--muted)">${mx.toFixed(1)}</text>
+      <text x="${pl-6}" y="${y(mn)}" font-size="14" text-anchor="end" fill="var(--muted)">${mn.toFixed(1)}</text>
       <line x1="${pl}" x2="${W-pr}" y1="${H-pb}" y2="${H-pb}" stroke="var(--line)"/>
-      ${pts.map(p=>`<circle cx="${x(p.i)}" cy="${y(p.w)}" r="3" fill="var(--muted)" opacity=".7"/>`).join('')}
+      ${pts.map(p=>`<circle cx="${x(p.i)}" cy="${y(p.w)}" r="4" fill="var(--muted)" opacity=".7"/>`).join('')}
       <polyline points="${roll.map(p=>`${x(p.i)},${y(p.w)}`).join(' ')}" fill="none" stroke="var(--cobalt)" stroke-width="3" stroke-linejoin="round"/>
-      <text x="${pl}" y="${H-6}" font-size="11" fill="var(--muted)">${start.getMonth()+1}/${start.getDate()}</text>
-      <text x="${W-pr}" y="${H-6}" font-size="11" text-anchor="end" fill="var(--muted)">${today.getMonth()+1}/${today.getDate()}</text></svg>`}
+      <text x="${pl}" y="${H-6}" font-size="14" fill="var(--muted)">${start.getMonth()+1}/${start.getDate()}</text>
+      <text x="${W-pr}" y="${H-6}" font-size="14" text-anchor="end" fill="var(--muted)">${today.getMonth()+1}/${today.getDate()}</text></svg>`}
 
-  $('#tanita').innerHTML=tanita.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.weight_kg)}</td><td>${esc(t.body_fat_pct)}%</td><td>${esc(t.fat_mass_kg)}</td><td>${esc(t.muscle_kg)}</td><td>${esc(t.visceral)}</td></tr>`).join('');
+  $('#tanita').innerHTML=tanita.slice().reverse().map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.weight_kg)}</td><td>${esc(t.body_fat_pct)}%</td><td>${esc(t.fat_mass_kg)}</td><td>${esc(t.muscle_kg)}</td><td>${esc(t.visceral)}</td></tr>`).join('');
 }
+
 const go=d=>{sel=d;render()};
 $('#prev').onclick=()=>go(addDays(sel,-1));
 $('#next').onclick=()=>go(addDays(sel,1));
 $('#todayBtn').onclick=()=>go(new Date());
 $('#pick').onchange=e=>{if(e.target.value)go(fromYmd(e.target.value))};
-$('#hist').onclick=e=>{const tr=e.target.closest('tr[data-d]');if(tr)go(fromYmd(tr.dataset.d))};
-$('#reload').onclick=load;load();
+const pickRow=e=>{const el=e.target.closest('[data-d]');if(el){go(fromYmd(el.dataset.d));showTab('today');scrollTo(0,0)}};
+$('#hist').onclick=pickRow;$('#week').onclick=pickRow;
+$('#reload').onclick=load;
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+load();
 </script>
 </body>
 </html>
