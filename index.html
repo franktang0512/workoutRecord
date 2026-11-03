@@ -14,6 +14,10 @@ header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
 h1{font-size:1.5rem;margin:0}
 h2{font-size:1rem;margin:0 0 10px}
 .muted{color:var(--muted);font-size:.85rem}
+.nav{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+input[type=date]{font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+#hist tr{cursor:pointer}#hist tr.sel td{background:var(--chip)}
+.scroll{overflow-x:auto}
 button{font:inherit;background:var(--chip);color:var(--ink);border:0;border-radius:8px;padding:6px 12px;cursor:pointer}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
@@ -44,19 +48,25 @@ code{background:var(--chip);padding:1px 5px;border-radius:4px}
 <main>
   <header>
     <div><h1>健康紀錄</h1><span class="muted" id="dateLabel"></span></div>
-    <button id="reload">重新整理</button>
+    <div class="nav">
+      <button id="prev" aria-label="前一天">‹</button>
+      <input type="date" id="pick">
+      <button id="next" aria-label="後一天">›</button>
+      <button id="todayBtn">今天</button>
+      <button id="reload">重新整理</button>
+    </div>
   </header>
   <div id="err"></div>
 
   <div class="grid">
     <div class="panel">
-      <h2>今天熱量</h2>
+      <h2><span class="dayWord">今天</span>熱量</h2>
       <div class="big" id="kcal">–</div>
       <div class="meter"><i id="kcalBar"></i><b id="kcalMin"></b></div>
       <div class="muted" id="kcalNote"></div>
     </div>
     <div class="panel">
-      <h2>今天蛋白質</h2>
+      <h2><span class="dayWord">今天</span>蛋白質</h2>
       <div class="big" id="prot">–</div>
       <div class="meter"><i id="protBar"></i></div>
       <div class="muted" id="protNote"></div>
@@ -75,8 +85,14 @@ code{background:var(--chip);padding:1px 5px;border-radius:4px}
   </div>
 
   <div class="panel">
-    <h2>今天吃了什麼</h2>
+    <h2><span class="dayWord">今天</span>吃了什麼</h2>
     <table><thead><tr><th>餐別</th><th>食物</th><th>數量</th><th>熱量</th><th>蛋白質</th></tr></thead><tbody id="meals"></tbody></table>
+    <p class="muted" id="dayNote" style="margin:10px 0 0"></p>
+  </div>
+
+  <div class="panel">
+    <h2>近 14 天（點一列可切換日期）</h2>
+    <div class="scroll"><table><thead><tr><th>日期</th><th>熱量</th><th>蛋白質</th><th>亂吃</th><th>有氧</th><th>重訓</th><th>體重</th></tr></thead><tbody id="hist"></tbody></table></div>
   </div>
 
   <div class="panel">
@@ -111,14 +127,25 @@ async function csv(name){const r=await fetch(`data/${name}.csv?t=${Date.now()}`)
 const num=v=>v===''||v==null?null:+v;
 const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
 
+let sel=new Date(),cache=null;
+const fromYmd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+
 async function load(){
-  let daily,meals,tanita,targets;
-  try{[daily,meals,tanita,targets]=await Promise.all(['daily','meals','tanita','targets'].map(csv));$('#err').style.display='none'}
+  try{cache=await Promise.all(['daily','meals','tanita','targets'].map(csv));$('#err').style.display='none'}
   catch(e){const el=$('#err');el.style.display='block';el.innerHTML='讀不到 <code>data/</code> 裡的 CSV。請用本機伺服器開啟這個頁面，例如在終端機執行 <code>python -m http.server 8000</code> 後開 <code>http://localhost:8000</code>，或用 VS Code 的 Live Server。';return}
+  render();
+}
+function render(){
+  if(!cache)return;
+  const [daily,meals,tanita,targets]=cache;
   const T=Object.fromEntries(targets.map(r=>[r.key,+r.value]));
-  const today=new Date(),tk=ymd(today);
-  $('#dateLabel').textContent=`${today.getMonth()+1}月${today.getDate()}日`;
+  const today=sel,tk=ymd(today),isToday=tk===ymd(new Date());
+  const wd='日一二三四五六'[today.getDay()];
+  $('#dateLabel').textContent=`${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日（${wd}）`;
+  $('#pick').value=tk;
+  document.querySelectorAll('.dayWord').forEach(el=>el.textContent=isToday?'今天':`${today.getMonth()+1}/${today.getDate()} `);
   const D=Object.fromEntries(daily.map(r=>[r.date,r]));
+  const dayTotals=k=>{const m=meals.filter(x=>x.date===k);return{n:m.length,kcal:m.reduce((s,x)=>s+(+x.kcal||0),0),prot:m.reduce((s,x)=>s+(+x.protein_g||0),0),junk:m.filter(x=>x.category==='亂吃').reduce((s,x)=>s+(+x.kcal||0),0)}};
 
   // today food
   const tm=meals.filter(m=>m.date===tk);
@@ -133,7 +160,15 @@ async function load(){
   $('#prot').textContent=`${prot.toFixed(1)} g`;
   $('#protBar').style.width=Math.min(prot/pt,1)*100+'%';
   $('#protNote').textContent=prot>=pt?'已達標':`還差 ${(pt-prot).toFixed(0)} g（目標 ${pt} g）`;
-  $('#meals').innerHTML=tm.length?tm.map(m=>`<tr class="${m.category==='亂吃'?'junk':''}"><td class="l">${esc(m.meal)}</td><td class="l">${esc(m.food)}</td><td>${esc(m.qty)} ${esc(m.unit)}</td><td>${Math.round(+m.kcal||0)}</td><td>${(+m.protein_g||0).toFixed(1)}</td></tr>`).join(''):'<tr><td colspan="5" class="l muted">今天還沒有紀錄</td></tr>';
+  $('#meals').innerHTML=tm.length?tm.map(m=>`<tr class="${m.category==='亂吃'?'junk':''}"><td class="l">${esc(m.meal)}</td><td class="l">${esc(m.food)}</td><td>${esc(m.qty)} ${esc(m.unit)}</td><td>${Math.round(+m.kcal||0)}</td><td>${(+m.protein_g||0).toFixed(1)}</td></tr>`).join(''):`<tr><td colspan="5" class="l muted">${isToday?'今天':'這天'}還沒有紀錄</td></tr>`;
+  const de=D[tk]||{};
+  $('#dayNote').textContent=[de.cardio_min?`有氧 ${de.cardio_min} 分鐘`:'',de.strength?`重訓：${de.strength}`:'',de.note||''].filter(Boolean).join('｜');
+
+  // history
+  let h='';
+  for(let i=0;i<14;i++){const d=addDays(today,-i),k=ymd(d),e=D[k]||{},t=dayTotals(k);
+    h+=`<tr data-d="${k}" class="${i===0?'sel':''}"><td>${d.getMonth()+1}/${d.getDate()}（${'日一二三四五六'[d.getDay()]}）</td><td>${t.n?Math.round(t.kcal):'–'}</td><td>${t.n?t.prot.toFixed(0):'–'}</td><td>${t.junk?Math.round(t.junk):''}</td><td>${e.cardio_min||''}</td><td>${esc(e.strength)}</td><td>${esc(e.weight_kg)}</td></tr>`}
+  $('#hist').innerHTML=h;
 
   // weight
   const ws=daily.filter(r=>num(r.weight_kg)).map(r=>({d:r.date,w:+r.weight_kg})).sort((a,b)=>a.d.localeCompare(b.d));
@@ -169,6 +204,12 @@ async function load(){
 
   $('#tanita').innerHTML=tanita.map(t=>`<tr><td>${esc(t.date)}</td><td>${esc(t.weight_kg)}</td><td>${esc(t.body_fat_pct)}%</td><td>${esc(t.fat_mass_kg)}</td><td>${esc(t.muscle_kg)}</td><td>${esc(t.visceral)}</td></tr>`).join('');
 }
+const go=d=>{sel=d;render()};
+$('#prev').onclick=()=>go(addDays(sel,-1));
+$('#next').onclick=()=>go(addDays(sel,1));
+$('#todayBtn').onclick=()=>go(new Date());
+$('#pick').onchange=e=>{if(e.target.value)go(fromYmd(e.target.value))};
+$('#hist').onclick=e=>{const tr=e.target.closest('tr[data-d]');if(tr)go(fromYmd(tr.dataset.d))};
 $('#reload').onclick=load;load();
 </script>
 </body>
