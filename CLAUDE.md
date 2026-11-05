@@ -10,12 +10,18 @@
   - 同一天已有資料時，更新那一列，不要新增重複的日期；有氧分鐘同一天多次要相加
 - `data/supplements.csv`：要追蹤的保健品清單。`short,name,dose,note`。網頁會依這份清單顯示打勾項目；新增保健品就加一列。保健品熱量可忽略，不記到 meals。
 - `data/meals.csv`：一樣食物一列。`date,meal,food,qty,unit,kcal,protein_g,category`
-  - `meal`：早餐／午餐／晚餐／點心／宵夜
+  - `meal`：早餐／午餐／晚餐／點心／宵夜／練前（訓練前補充，例如蛋白粉、果凍飲）
   - `category`：`正常` 或 `亂吃`（零食、甜點、含糖飲料、宵夜炸物通常算亂吃；不確定就問）
   - `kcal`、`protein_g` 存的是「這次吃的份量」算好的數值
 - `data/foods.csv`：食物庫，每種食物的標示登記一次。`food,base_qty,unit,kcal,protein_g,note,source`
   - 包裝怎麼標就怎麼存（每 100 g、每個、每份都可以）
   - `source`：`包裝標示`、`官方資料`、`網路整理數據` 或 `估計`
+- `data/exercises.csv`：動作庫，每個動作／器材登記一次。`exercise,body_part,equipment,how_to`
+  - 用途是讓使用者之後自己練時知道怎麼做；`how_to` 記動作要點、座椅／握把設定、教練提醒
+  - 名稱要統一（同一台器材不要取兩個名字）；新動作先問清楚部位與器材
+- `data/workouts.csv`：每次訓練做了哪些動作，一個動作一列。`date,exercise,sets,reps,weight_kg,note`
+  - `exercise` 要對應 `exercises.csv`；組數、次數、重量不知道就留空
+  - 記了動作的那天，`daily.csv` 的 `strength` 也要填
 - `data/tanita.csv`：體組成測量紀錄
 - `data/targets.csv`：目標值
 
